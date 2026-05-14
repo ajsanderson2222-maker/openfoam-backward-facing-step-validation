@@ -6,6 +6,9 @@ case/constant/polyMesh/
 case/log.*
 case/*.foam
 
+# Mesh study generated case directories
+studies/mesh-density/runs/
+
 # Python/cache output
 __pycache__/
 *.py[cod]

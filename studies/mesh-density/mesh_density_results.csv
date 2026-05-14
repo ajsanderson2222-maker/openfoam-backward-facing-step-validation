@@ -1,0 +1,6 @@
+variant,label,cell_count,upstream_cells,lower_cells,upper_cells,residual_trigger_iteration,final_iteration,final_time_dir,static_pressure_delta_pa,total_pressure_drop_pa,p_step_abs_pa,max_aspect_ratio,max_non_orthogonality,max_skewness,mesh_ok
+coarse_050,Coarse 0.50x,1050,15x10x1,60x5x1,60x10x1,256,456,456,-3329.242035,752.992455,97774.3375,2.5,0,6.63442e-14,yes
+coarse_075,Coarse 0.75x,2400,22x15x1,90x8x1,90x15x1,374,574,574,-3311.100581,898.6085946,97765.28475,2.66667,0,6.66134e-14,yes
+baseline_100,Baseline 1.00x,4200,30x20x1,120x10x1,120x20x1,530,730,730,-3291.722625,942.5217573,97767.56325,2.5,0,1.32183e-13,yes
+fine_150,Fine 1.50x,9450,45x30x1,180x15x1,180x30x1,473,673,673,-3278.963209,828.5751988,97777.841,2.5,0,1.9984e-13,yes
+fine_200,Fine 2.00x,16800,60x40x1,240x20x1,240x40x1,677,877,877,-3271.1702,867.4141734,97780.83,2.5,0,2.66454e-13,yes

@@ -188,14 +188,10 @@ The baseline case is complete enough to serve as the reference case for the next
 - generated CSV data and plots for GitHub/GitLab review
 - automated mesh and pressure figures
 
-## Next Step: Mesh Density Study
+## Mesh Density Study
 
-The next phase will turn this baseline into a mesh density study. The planned structure is:
+The first mesh density sweep is now available in `studies/mesh-density/`. It uses this baseline as the center mesh and adds two coarser and two finer structured meshes.
 
-1. Create coarse, medium, and fine mesh variants from the same geometry.
-2. Keep physics, boundary conditions, schemes, and residual targets fixed.
-3. Run each mesh until residual convergence plus 200 additional SIMPLE iterations.
-4. Compare final total pressure drop, step-edge pressure, and residual behavior.
-5. Add velocity profile sampling and reattachment-length extraction once the mesh variants are in place.
+The study keeps physics, boundary conditions, schemes, and residual targets fixed. Each mesh runs until residual convergence plus 200 additional SIMPLE iterations, then the same pressure KPIs are extracted.
 
-The mesh density study will establish whether the reported pressure metrics are mesh independent enough for a portfolio validation case.
+The next refinement should add section-averaged pressure/velocity sampling and downstream velocity profiles so the point-probe KPIs can be compared against more robust integral and profile-based quantities.

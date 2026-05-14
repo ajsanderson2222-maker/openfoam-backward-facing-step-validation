@@ -17,6 +17,8 @@ The current repository state is a completed baseline case. The next planned stag
 
 For the full baseline writeup, see [docs/baseline-report.md](docs/baseline-report.md).
 
+For the mesh density study, see [studies/mesh-density/README.md](studies/mesh-density/README.md).
+
 ## Repository Layout
 
 ```text
@@ -108,11 +110,15 @@ The current baseline run reached the residual trigger at SIMPLE iteration `530`,
 
 ## Validation Plan
 
-The current version focuses on a reproducible baseline. The next planned work is a mesh density study:
+The first mesh density sweep is now included in `studies/mesh-density/`. It runs two coarser meshes, the baseline mesh, and two finer meshes while tracking total pressure drop and step-edge absolute pressure.
 
-- add coarse, medium, and fine mesh variants
-- hold physics, boundary conditions, and convergence controls constant
-- compare pressure drop and step-edge pressure across mesh levels
+![Mesh density KPI sensitivity](studies/mesh-density/mesh_density_kpis.png)
+
+![Mesh density pressure monitor histories](studies/mesh-density/mesh_density_convergence.png)
+
+The next planned improvements are:
+
+- add section-averaged upstream and outlet pressure/velocity sampling
 - sample velocity profiles downstream of the step
 - estimate reattachment length from wall shear or near-wall axial velocity
 - compare against published backward-facing-step data
