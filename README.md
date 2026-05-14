@@ -2,7 +2,7 @@
 
 This project is a compact OpenFOAM validation case for turbulent separated flow over a backward-facing step. It is intended as a portfolio-quality CFD example that demonstrates case setup, meshing, solver control, post-processing, and engineering judgment in OpenFOAM.
 
-The current repository state is a completed baseline case. The next planned stage is a mesh density study using the same geometry, physics, convergence controls, and pressure monitors.
+The repository includes a baseline case and a mesh density sweep. The sweep is not intended to demonstrate full mesh independence — the KPIs continue to shift at finer resolutions — but rather to illustrate the process: how to set up a parametric study, track convergence across variants, and interpret the sensitivity of engineering quantities to cell count. A key practical observation from the study is that segregated solvers like `simpleFoam` scale poorly with mesh refinement: each SIMPLE iteration is cheap, but the iteration count required for convergence grows significantly on finer meshes, making very fine grids expensive even for 2D cases.
 
 ## Case Summary
 
@@ -108,20 +108,13 @@ The current baseline run reached the residual trigger at SIMPLE iteration `530`,
 | Step-edge absolute pressure | `97767.56325 Pa` |
 | Final iteration | `730` |
 
-## Validation Plan
+## Mesh Density Study
 
-The first mesh density sweep is now included in `studies/mesh-density/`. It runs two coarser meshes, the baseline mesh, and four finer meshes up to 8.00x linear refinement while tracking total pressure drop and step-edge absolute pressure.
+The mesh density sweep is included in `studies/mesh-density/`. It runs two coarser meshes, the baseline mesh, and three finer meshes up to 4.00x linear refinement while tracking total pressure drop and step-edge absolute pressure.
 
 ![Mesh density KPI sensitivity](studies/mesh-density/mesh_density_kpis.png)
 
 ![Mesh density pressure monitor histories](studies/mesh-density/mesh_density_convergence.png)
-
-The next planned improvements are:
-
-- add section-averaged upstream and outlet pressure/velocity sampling
-- sample velocity profiles downstream of the step
-- estimate reattachment length from wall shear or near-wall axial velocity
-- compare against published backward-facing-step data
 
 ## Portfolio Talking Points
 
