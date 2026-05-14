@@ -1,0 +1,17 @@
+# OpenFOAM generated case output
+case/[1-9]*/
+case/processor*/
+case/postProcessing/
+case/constant/polyMesh/
+case/log.*
+case/*.foam
+
+# Python/cache output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local editor/OS files
+.DS_Store
+*.swp
+*~

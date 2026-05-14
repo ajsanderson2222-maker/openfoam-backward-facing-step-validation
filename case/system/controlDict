@@ -1,0 +1,122 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+
+application     simpleFoam;
+
+startFrom       startTime;
+startTime       0;
+
+stopAt          endTime;
+endTime         1000;
+
+deltaT          1;
+
+writeControl    timeStep;
+writeInterval   250;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+writePrecision  6;
+writeCompression off;
+
+timeFormat      general;
+timePrecision   6;
+
+runTimeModifiable true;
+
+functions
+{
+    residualConvergenceTrigger
+    {
+        type            runTimeControl;
+        libs            (utilityFunctionObjects);
+
+        conditions
+        {
+            pResidual
+            {
+                type            equationInitialResidual;
+                fields          (p);
+                value           1e-5;
+                mode            minimum;
+            }
+
+            UxResidual
+            {
+                type            equationInitialResidual;
+                fields          (U.component(0));
+                value           1e-6;
+                mode            minimum;
+            }
+
+            UyResidual
+            {
+                type            equationInitialResidual;
+                fields          (U.component(1));
+                value           1e-6;
+                mode            minimum;
+            }
+
+            kResidual
+            {
+                type            equationInitialResidual;
+                fields          (k);
+                value           1e-6;
+                mode            minimum;
+            }
+
+            omegaResidual
+            {
+                type            equationInitialResidual;
+                fields          (omega);
+                value           1e-6;
+                mode            minimum;
+            }
+        }
+
+        satisfiedAction setTrigger;
+        trigger         1;
+    }
+
+    postConvergenceIterations
+    {
+        type            runTimeControl;
+        libs            (utilityFunctionObjects);
+        controlMode     trigger;
+        triggerStart    1;
+
+        conditions
+        {
+            duration
+            {
+                type            maxDuration;
+                duration        200;
+            }
+        }
+
+        satisfiedAction end;
+    }
+
+    pressureProbes
+    {
+        type            probes;
+        libs            ("libsampling.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        fields          (p U);
+
+        probeLocations
+        (
+            (-0.045 0.020 0.0005)  // upstream channel centerline
+            ( 0.295 0.015 0.0005)  // outlet channel centerline
+            ( 0.001 0.0105 0.0005) // just downstream of step edge
+        );
+    }
+}
