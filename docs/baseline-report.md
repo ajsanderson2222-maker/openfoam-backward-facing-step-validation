@@ -190,7 +190,7 @@ The baseline case is complete enough to serve as the reference case for the next
 
 ## Mesh Density Study
 
-The first mesh density sweep is now available in `studies/mesh-density/`. It uses this baseline as the center mesh and adds two coarser and two finer structured meshes.
+The first mesh density sweep is now available in `studies/mesh-density/`. It uses this baseline as the center mesh and adds two coarser and four finer structured meshes up to 8.00x linear refinement.
 
 The study keeps physics, boundary conditions, schemes, and residual targets fixed. Each mesh runs until residual convergence plus 200 additional SIMPLE iterations, then the same pressure KPIs are extracted.
 

@@ -26,6 +26,7 @@ P_REF = 101325.0
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from post_process import (  # noqa: E402
+    late_window_limits,
     parse_pressure_probes,
     parse_residuals,
     parse_velocity_probes,
@@ -56,6 +57,8 @@ VARIANTS = [
     MeshVariant("baseline_100", "Baseline 1.00x", (30, 20, 1), (120, 10, 1), (120, 20, 1)),
     MeshVariant("fine_150", "Fine 1.50x", (45, 30, 1), (180, 15, 1), (180, 30, 1)),
     MeshVariant("fine_200", "Fine 2.00x", (60, 40, 1), (240, 20, 1), (240, 40, 1)),
+    MeshVariant("fine_400", "Fine 4.00x", (120, 80, 1), (480, 40, 1), (480, 80, 1)),
+    MeshVariant("fine_800", "Fine 8.00x", (240, 160, 1), (960, 80, 1), (960, 160, 1)),
 ]
 
 
@@ -156,6 +159,16 @@ def run_case(case_dir: Path) -> None:
     (case_dir / "backward-facing-step.foam").touch()
 
 
+def has_completed_run(case_dir: Path) -> bool:
+    log_path = case_dir / "log.simpleFoam"
+    probe_root = case_dir / "postProcessing" / "pressureProbes"
+    if not log_path.exists() or not probe_root.exists():
+        return False
+
+    log_tail = "\n".join(log_path.read_text(errors="replace").splitlines()[-20:])
+    return "End" in log_tail and any(probe_root.glob("*/p")) and any(probe_root.glob("*/U"))
+
+
 def first_probe_file(case_dir: Path, field: str) -> Path:
     candidates = sorted(
         (case_dir / "postProcessing" / "pressureProbes").glob(f"*/{field}"),
@@ -243,6 +256,7 @@ def collect_variant_outputs(variant: MeshVariant, case_dir: Path) -> tuple[dict[
 
     final = pressure_rows[-1]
     mesh_metrics = parse_check_mesh(case_dir / "log.checkMesh")
+    residual_trigger_iteration = find_trigger_iteration(case_dir / "log.simpleFoam")
     summary = {
         "variant": variant.name,
         "label": variant.label,
@@ -250,7 +264,8 @@ def collect_variant_outputs(variant: MeshVariant, case_dir: Path) -> tuple[dict[
         "upstream_cells": "x".join(str(value) for value in variant.upstream_cells),
         "lower_cells": "x".join(str(value) for value in variant.lower_cells),
         "upper_cells": "x".join(str(value) for value in variant.upper_cells),
-        "residual_trigger_iteration": find_trigger_iteration(case_dir / "log.simpleFoam"),
+        "residual_triggered": "yes" if residual_trigger_iteration else "no",
+        "residual_trigger_iteration": residual_trigger_iteration,
         "final_iteration": final["iteration"],
         "final_time_dir": final_time_dir(case_dir),
         "static_pressure_delta_pa": final["static_pressure_delta_pa"],
@@ -281,6 +296,7 @@ def write_summary(rows: list[dict[str, str]]) -> None:
         "upstream_cells",
         "lower_cells",
         "upper_cells",
+        "residual_triggered",
         "residual_trigger_iteration",
         "final_iteration",
         "final_time_dir",
@@ -319,6 +335,22 @@ def write_histories(rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
+def padded_limits(values: list[float], padding: float = 0.1) -> tuple[float, float]:
+    lower = min(values)
+    upper = max(values)
+    span = upper - lower
+    if span == 0:
+        span = max(abs(lower) * padding, 1.0)
+    return lower - span * padding, upper + span * padding
+
+
+def combined_late_limits(series_values: list[list[float]], padding: float = 0.1) -> tuple[float, float]:
+    limits = [late_window_limits(values, padding=padding) for values in series_values if values]
+    if not limits:
+        return 0.0, 1.0
+    return min(limit[0] for limit in limits), max(limit[1] for limit in limits)
+
+
 def write_plots(summary_rows: list[dict[str, str]], history_rows: list[dict[str, str]]) -> None:
     os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
     warnings.filterwarnings("ignore", message="Unable to import Axes3D.*")
@@ -333,11 +365,13 @@ def write_plots(summary_rows: list[dict[str, str]], history_rows: list[dict[str,
     fig, axes = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
     axes[0].plot(cells, pressure_drop, marker="o", linewidth=1.8, color="#1f77b4")
     axes[0].set_ylabel("Total pressure drop [Pa]")
+    axes[0].set_ylim(*padded_limits(pressure_drop))
     axes[0].grid(True, alpha=0.3)
 
     axes[1].plot(cells, step_pressure, marker="o", linewidth=1.8, color="#d62728")
     axes[1].set_xlabel("Cell count")
     axes[1].set_ylabel("Step-edge p_abs [Pa]")
+    axes[1].set_ylim(*padded_limits(step_pressure))
     axes[1].grid(True, alpha=0.3)
     axes[1].set_xticks(cells, labels, rotation=20, ha="right")
 
@@ -351,19 +385,25 @@ def write_plots(summary_rows: list[dict[str, str]], history_rows: list[dict[str,
         by_variant.setdefault(row["variant"], []).append(row)
 
     fig, axes = plt.subplots(2, 1, figsize=(9, 7), sharex=True)
+    drop_series = []
+    step_series = []
     for row in summary:
         rows = by_variant[row["variant"]]
         iterations = [float(item["iteration"]) for item in rows]
         drops = [float(item["total_pressure_drop_pa"]) for item in rows]
         steps = [float(item["p_step_abs_pa"]) for item in rows]
+        drop_series.append(drops)
+        step_series.append(steps)
         axes[0].plot(iterations, drops, linewidth=1.2, label=row["label"])
         axes[1].plot(iterations, steps, linewidth=1.2, label=row["label"])
 
     axes[0].set_ylabel("Total pressure drop [Pa]")
+    axes[0].set_ylim(*combined_late_limits(drop_series))
     axes[0].grid(True, alpha=0.3)
     axes[0].legend(fontsize=8)
     axes[1].set_xlabel("SIMPLE iteration")
     axes[1].set_ylabel("Step-edge p_abs [Pa]")
+    axes[1].set_ylim(*combined_late_limits(step_series))
     axes[1].grid(True, alpha=0.3)
     fig.suptitle("Mesh density pressure monitor histories")
     fig.tight_layout()
@@ -381,14 +421,17 @@ def main() -> None:
 
     for variant in VARIANTS:
         case_dir = RUNS / variant.name / "case"
-        print(f"Preparing {variant.label}: {variant.cell_count} cells")
+        print(f"Preparing {variant.label}: {variant.cell_count} cells", flush=True)
         copy_base_case(case_dir, args.force)
         write_block_mesh(case_dir, variant)
 
         if not args.setup_only:
-            print(f"Running {variant.label}")
-            clean_case_output(case_dir)
-            run_case(case_dir)
+            if args.force or not has_completed_run(case_dir):
+                print(f"Running {variant.label}", flush=True)
+                clean_case_output(case_dir)
+                run_case(case_dir)
+            else:
+                print(f"Using completed {variant.label} run", flush=True)
             summary, histories = collect_variant_outputs(variant, case_dir)
             summary_rows.append(summary)
             history_rows.extend(histories)

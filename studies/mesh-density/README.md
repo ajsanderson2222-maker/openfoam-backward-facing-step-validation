@@ -19,18 +19,22 @@ The generated OpenFOAM run directories are intentionally ignored by Git. The com
 | Baseline 1.00x | 4200 | `30x20x1` | `120x10x1` | `120x20x1` |
 | Fine 1.50x | 9450 | `45x30x1` | `180x15x1` | `180x30x1` |
 | Fine 2.00x | 16800 | `60x40x1` | `240x20x1` | `240x40x1` |
+| Fine 4.00x | 67200 | `120x80x1` | `480x40x1` | `480x80x1` |
+| Fine 8.00x | 268800 | `240x160x1` | `960x80x1` | `960x160x1` |
 
-All five meshes passed `checkMesh`.
+All seven meshes passed `checkMesh`.
 
 ## KPI Summary
 
-| Variant | Cells | Residual trigger | Final iteration | Total pressure drop [Pa] | Step-edge p_abs [Pa] |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Coarse 0.50x | 1050 | 256 | 456 | 752.992455 | 97774.3375 |
-| Coarse 0.75x | 2400 | 374 | 574 | 898.6085946 | 97765.28475 |
-| Baseline 1.00x | 4200 | 530 | 730 | 942.5217573 | 97767.56325 |
-| Fine 1.50x | 9450 | 473 | 673 | 828.5751988 | 97777.841 |
-| Fine 2.00x | 16800 | 677 | 877 | 867.4141734 | 97780.83 |
+| Variant | Cells | Residual triggered | Trigger iteration | Final iteration | Total pressure drop [Pa] | Step-edge p_abs [Pa] |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| Coarse 0.50x | 1050 | yes | 256 | 456 | 752.992455 | 97774.3375 |
+| Coarse 0.75x | 2400 | yes | 374 | 574 | 898.6085946 | 97765.28475 |
+| Baseline 1.00x | 4200 | yes | 530 | 730 | 942.5217573 | 97767.56325 |
+| Fine 1.50x | 9450 | yes | 473 | 673 | 828.5751988 | 97777.841 |
+| Fine 2.00x | 16800 | yes | 677 | 877 | 867.4141734 | 97780.83 |
+| Fine 4.00x | 67200 | no |  | 1000 | 553.9807839 | 97751.332 |
+| Fine 8.00x | 268800 | no |  | 1000 | -152.3158571 | 96064.115 |
 
 ![Mesh density KPI sensitivity](mesh_density_kpis.png)
 
@@ -49,6 +53,8 @@ All five meshes passed `checkMesh`.
 
 ## Initial Interpretation
 
-The step-edge absolute pressure changes by roughly `15.5 Pa` across this first sweep, while total pressure drop varies more strongly and non-monotonically. That behavior is useful for the portfolio because it shows that a single point-to-point pressure-drop probe is mesh-sensitive in this separated-flow case.
+The 0.50x through 2.00x cases reached the residual trigger and then ran 200 additional SIMPLE iterations. The 4.00x and 8.00x cases reached the current 1000-iteration ceiling before satisfying the original residual trigger, so those two rows should be treated as fixed-iteration fine-mesh indicators rather than final converged values.
+
+The point-probe total pressure drop varies strongly with mesh density and is non-monotonic. The 8.00x result in particular shows that the current point probes are not a robust mesh-independent KPI at very high resolution without additional convergence/runtime work. That behavior is useful for the portfolio because it identifies the next engineering improvement instead of hiding the limitation.
 
 The next improvement should add sampled outlet and upstream section averages, plus downstream velocity profiles, so the mesh study can compare both point probes and area/profile-based quantities.

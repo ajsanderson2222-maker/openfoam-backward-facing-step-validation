@@ -110,7 +110,7 @@ The current baseline run reached the residual trigger at SIMPLE iteration `530`,
 
 ## Validation Plan
 
-The first mesh density sweep is now included in `studies/mesh-density/`. It runs two coarser meshes, the baseline mesh, and two finer meshes while tracking total pressure drop and step-edge absolute pressure.
+The first mesh density sweep is now included in `studies/mesh-density/`. It runs two coarser meshes, the baseline mesh, and four finer meshes up to 8.00x linear refinement while tracking total pressure drop and step-edge absolute pressure.
 
 ![Mesh density KPI sensitivity](studies/mesh-density/mesh_density_kpis.png)
 
